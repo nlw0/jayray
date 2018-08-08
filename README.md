@@ -1,3 +1,3 @@
-Classic ray-tracing demo with checkerboard plane and mirror spheres... In Clojure. WIP
+Classic ray-tracing demo with checkerboard plane and a mirror sphere. In Clojure.
 
-![https://pbs.twimg.com/media/DkCEgEFW0AEp_OG.jpg:large](https://pbs.twimg.com/media/DkCEgEFW0AEp_OG.jpg:large)
+![https://pbs.twimg.com/media/DkGc73EXoAIUetw.jpg:large](https://pbs.twimg.com/media/DkGc73EXoAIUetw.jpg:large)
