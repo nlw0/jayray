@@ -11,11 +11,12 @@
 (def sky-color [63 126 226])
 (def plane-white [255 255 255])
 (def plane-black [0 0 0])
+(def error-color [255 0 0])
 
 (def oo [0 -1.5 -0.6])
 (def rr 0.6)
 
-(declare camera-model find-color touch-sphere? trace-reflection plane-texture trace-if-hit sky-or-plane)
+(declare camera-model find-color hit-sphere? hit-plane? touch-sphere? trace-reflection plane-texture)
 
 (def pix
   (for [j (range IH)
@@ -29,10 +30,11 @@
     (find-color cw vv 1)))
 
 (defn find-color [cw vv iter]
-  (or (trace-if-hit cw vv iter)
-      (sky-or-plane cw vv)))
+  (or (hit-sphere? cw vv iter)
+      (hit-plane? cw vv)
+      sky-color))
 
-(defn trace-if-hit [cw vv iter]
+(defn hit-sphere? [cw vv iter]
   (let [dd (touch-sphere? cw vv)]
     (if dd
       (trace-reflection cw dd vv iter)
@@ -43,23 +45,23 @@
         nn (vsub newcw oo)]
     (if (< 0 iter)
         (find-color newcw (reflect vv nn) (- iter 1))
-        0)))
+        error-color)))
 
-(defn sky-or-plane [cw vv]
+(defn hit-plane? [cw vv]
   (let [t (/ (* -1 (get cw 2)) (get vv 2))]
-    (if (< t 0)
-      sky-color
-      (plane-texture cw vv t))))
-    
-(defn plane-texture [cw vv t]  
-  (let [px (+ (get cw 0) (* t (get vv 0)))
-        py (+ (get cw 1) (* t (get vv 1)))]          
-     (if (> (norm [px py 0]) 50)
-       sky-color
-       (if (or (and (< (mod px 1.0) 0.5) (< (mod py 1.0) 0.5)) 
-               (and (> (mod px 1.0) 0.5) (> (mod py 1.0) 0.5)))
-           (map int (vscale (/ 0.001 (* t t)) plane-white))      
-           (map int (vscale (/ 0.001 (* t t)) plane-black))))))
+    (plane-texture cw vv t)))
+
+(defn plane-texture [cw vv t]
+  (if (< t 0)
+    nil
+    (let [px (+ (get cw 0) (* t (get vv 0)))
+          py (+ (get cw 1) (* t (get vv 1)))]
+       (if (> (norm [px py 0]) 50)
+         nil
+         (if (or (and (< (mod px 1.0) 0.5) (< (mod py 1.0) 0.5)) 
+                 (and (> (mod px 1.0) 0.5) (> (mod py 1.0) 0.5)))
+             (map int (vscale (/ 0.001 (* t t)) plane-white))
+             (map int (vscale (/ 0.001 (* t t)) plane-black)))))))
 
 (defn touch-sphere? [cw vv]
   (let [ll (normalze vv)
