@@ -1,3 +1,6 @@
+(ns jayray.quat
+  (:gen-class))
+
 (declare norm normalze dot vscale vsum vsub)
 
 (defn qrot [a b c d]
