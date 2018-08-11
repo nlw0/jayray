@@ -73,8 +73,8 @@
     (find-color (make-ray newcw (reflect (:dir ray) nn)))))
 
 (defn hit-plane? [ray]
-  (let [t (/ (* -1 (get (:orig ray) 2)
-                   (get (:dir ray) 2)))
+  (let [t (/ (* -1 (get (:orig ray) 2))
+             (get (:dir ray) 2))
         yaya (plane-texture ray t)]
     (if yaya
       {:dist 1000 :func (fn [] yaya)}
