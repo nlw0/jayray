@@ -22,36 +22,39 @@
 (def oo3 [-1.2 -1.5 -0.6])
 (def rr 0.6)
 
-(declare camera-model find-color hit-sphere? hit-plane? touch-sphere? trace-reflection plane-texture smallest-head? hit-sky vec-from-pixel
-         make-ray)
+(declare find-pixel-color find-ray-color hit-sphere? hit-plane? touch-sphere? trace-reflection
+         plane-texture smallest-head? hit-sky vec-from-pixel make-ray test-ray)
 
 (def pix
   (for [j (range IH)
         k (range IW)]
-    (camera-model j k)))
+    (find-pixel-color [j k])))
 
-(defn camera-model [j k]
-  (let [ray (vec-from-pixel j k)]
-    (find-color ray)))
+(defn find-pixel-color [pix]
+  (find-ray-color (vec-from-pixel pix)))
 
-(defn vec-from-pixel [j k]
+(defn vec-from-pixel [jk]
   (let [cw [0 0 -2.0]
         qq [(- 1 (* tilt tilt)) (* tilt tilt) 0 0]
-        vv (rotate qq (vsum [k j 0] oc))]
+        vv (rotate qq (vsum [(get jk 1) (get jk 0) 0] oc))]
     (make-ray cw vv)))
 
 (defn make-ray [cw vv] {:orig cw :dir vv})
 
-(defn find-color [ray]
-  (let [tests [(hit-sphere? ray oo1)
-               (hit-sphere? ray oo2)
-               (hit-sphere? ray oo3)
-               (hit-plane? ray)]
+(defn find-ray-color [ray]
+  (let [tests (test-ray ray)
         valid-tests (filter identity tests)
         the-hit (smallest-head? valid-tests)]
     (if (nil? the-hit)
       sky-color
       (the-hit))))
+
+(defn test-ray [ray]
+  [(hit-sphere? ray oo1)
+   (hit-sphere? ray oo2)
+   (hit-sphere? ray oo3)
+   (hit-plane? ray)])
+
 
 (defn hit-sky [] sky-color)
 
@@ -59,18 +62,6 @@
   (if (empty? pairs)
     nil
     (:func (apply min-key (cons :dist pairs)))))
-
-(defn hit-sphere? [ray oo]
-  (let [dd (touch-sphere? ray oo)]
-    (if dd
-      ;; [dd (fn [] (trace-reflection cw dd vv oo))]
-      {:dist dd :func (fn [] (trace-reflection ray dd oo))}
-      nil)))
-
-(defn trace-reflection [ray dd oo]
-  (let [newcw (vsum (:orig ray) (vscale dd (normalze (:dir ray))))
-        nn (vsub newcw oo)]
-    (find-color (make-ray newcw (reflect (:dir ray) nn)))))
 
 (defn hit-plane? [ray]
   (let [t (/ (* -1 (get (:orig ray) 2))
@@ -92,6 +83,18 @@
              (map int (vscale (/ 0.001 (* t t)) plane-white))
              (map int (vscale (/ 0.001 (* t t)) plane-black)))))))
 
+(defn hit-sphere? [ray oo]
+  (let [dd (touch-sphere? ray oo)]
+    (if dd
+      ;; [dd (fn [] (trace-reflection cw dd vv oo))]
+      {:dist dd :func (fn [] (trace-reflection ray dd oo))}
+      nil)))
+
+(defn trace-reflection [ray dd oo]
+  (let [newcw (vsum (:orig ray) (vscale dd (normalze (:dir ray))))
+        nn (vsub newcw oo)]
+    (find-ray-color (make-ray newcw (reflect (:dir ray) nn)))))
+
 (defn touch-sphere? [ray oo]
   (let [ll (normalze (:dir ray))
         oc (vsub (:orig ray) oo)
@@ -105,14 +108,7 @@
       dd
       nil)))
 
-;; (def pix
-;;   (for [j (range IH)
-;;         k (range IW)]
-;;     (let [r
-;;           (+ 1e-7 (* 0.2 (Math/sqrt (+ (* k k) (* j j)))))]
-;;       (int (* 255  (+ 0.5 ( * 0.5 (/ (Math/sin ( * (* 0.5 Math/PI) r))
-;;                                      (Math/sqrt r)))))))))
-
+;;
 ;; output netbpm file
 (defn write-to-file [file-name contents]
   (with-open [wtr (jio/writer file-name)]
